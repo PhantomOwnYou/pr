@@ -1,0 +1,91 @@
+-- Define the GUI
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Parent = player.PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 150) -- Increased the height to accommodate the new button positions
+frame.Position = UDim2.new(0.5, -100, 0.5, -75)
+frame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+frame.Parent = gui
+
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(0, 180, 0, 30)
+textBox.Position = UDim2.new(0.5, -90, 0, 10)
+textBox.PlaceholderText = "Enter level number"
+textBox.Parent = frame
+
+local changeLevelButton = Instance.new("TextButton")
+changeLevelButton.Size = UDim2.new(0, 180, 0, 40) -- Adjusted the size
+changeLevelButton.Position = UDim2.new(0.5, -90, 0, 50) -- Moved the button under the text box
+changeLevelButton.BackgroundColor3 = Color3.new(0.1, 0.6, 0.1)
+changeLevelButton.TextColor3 = Color3.new(1, 1, 1)
+changeLevelButton.Text = "Change Level"
+changeLevelButton.Parent = frame
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 180, 0, 40) -- Adjusted the size
+closeButton.Position = UDim2.new(0.5, -90, 0, 100) -- Positioned under the "Change Level" button
+closeButton.BackgroundColor3 = Color3.new(0.6, 0.1, 0.1)
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.Text = "Close"
+closeButton.Parent = frame
+
+-- Variables for dragging functionality
+local isDragging = false
+local startPosition = nil
+
+-- Function to handle dragging
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true
+        startPosition = frame.Position - UDim2.new(0, input.Position.X, 0, input.Position.Y)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch and isDragging then
+        local newPosition = UDim2.new(0, input.Position.X, 0, input.Position.Y) + startPosition
+        frame.Position = newPosition
+    end
+end)
+
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = false
+    end
+end)
+
+-- Define the function to change the level
+local function changeLevel(arg)
+    local Targets = tonumber(arg)
+    if Targets then
+        local mt = getrawmetatable(game)
+        setreadonly(mt, false)
+        local old_index = mt.__index
+
+        mt.__index = function(a, b)
+            if tostring(a) == "PPLevel" then
+                if tostring(b) == "Value" then
+                    return Targets
+                end
+            end
+            return old_index(a, b)
+        end
+
+        setreadonly(mt, true)
+    else
+        warn("Invalid input. Please enter a valid number.")
+    end
+end
+
+-- Bind the function to the button click
+changeLevelButton.MouseButton1Click:Connect(function()
+    local levelInput = textBox.Text
+    changeLevel(levelInput)
+end)
+
+-- Bind the function to the close button click
+closeButton.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
